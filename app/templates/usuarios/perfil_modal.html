@@ -1,0 +1,52 @@
+<div id="modal-perfil" class="modal-overlay" style="display:none;" onclick="cerrarModalSiFondo(event,'modal-perfil')">
+  <div class="modal-caja" style="width:520px;">
+    <div class="modal-cabecera">
+      <span>Mi perfil</span>
+      <button class="modal-cerrar" onclick="cerrarModal('modal-perfil')">&times;</button>
+    </div>
+    <form method="post" action="{{ url_for('perfil_editar') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="modal-cuerpo">
+
+        <!-- Fila 1: Login (estrecho) + Contraseña (ancha, label en una línea) -->
+        <div style="display:grid;grid-template-columns:160px 1fr;gap:12px;margin-bottom:12px;">
+          <div>
+            <label class="lbl-modal">Login</label>
+            <input type="text" name="username" class="form-control fc-modal"
+                   value="{{ current_user.username }}" required autocomplete="off">
+          </div>
+          <div>
+            <label class="lbl-modal" style="white-space:nowrap;">
+              Nueva contraseña
+              <span style="font-weight:400;color:var(--texto-gris);font-size:11px;">(vacío = no cambiar)</span>
+            </label>
+            <input type="password" name="password" class="form-control fc-modal" autocomplete="new-password">
+          </div>
+        </div>
+
+        <!-- Fila 2: Nombre completo + Email -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div>
+            <label class="lbl-modal">Nombre completo</label>
+            <input type="text" name="nombre" class="form-control fc-modal"
+                   value="{{ current_user.nombre or '' }}">
+          </div>
+          <div>
+            <label class="lbl-modal">Email</label>
+            <input type="email" name="email" class="form-control fc-modal"
+                   value="{{ current_user.email or '' }}">
+          </div>
+        </div>
+
+      </div>
+      <div class="modal-pie">
+        <button type="submit" class="btn-modal-ok">
+          <span class="glyphicon glyphicon-ok"></span> Guardar
+        </button>
+        <button type="button" class="btn-modal-cancel" onclick="cerrarModal('modal-perfil')">
+          <span class="glyphicon glyphicon-remove"></span> Cancelar
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

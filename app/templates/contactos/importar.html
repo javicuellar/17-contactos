@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+
+{% block title %}Importar Contactos desde Fichero{% endblock %}
+
+{% block contenido %}
+
+<div class="breadcrumb-bar">
+  <a href="{{ url_for('contactos') }}">🏠</a>
+  <span class="sep"> &gt; </span>
+  <a href="{{ url_for('contactos') }}">Contactos</a>
+  <span class="sep"> &gt; </span>
+  <span class="current">Importar desde fichero</span>
+</div>
+
+
+<div class="importar-cols" style="display:flex;gap:20px;flex-wrap:wrap;align-items:stretch;">
+
+  <!-- PANEL FORMULARIO -->
+  <div class="form-card" style="flex:1;min-width:300px;">
+    <h3>Seleccionar fichero</h3>
+
+    <form method="post" enctype="multipart/form-data">
+      {{ form.csrf_token }}
+
+      <!-- Zona de drop / selección -->
+      <div id="drop-zone" style="
+          border:2px dashed var(--gris-borde);
+          border-radius:6px;
+          padding:14px 16px;
+          text-align:center;
+          cursor:pointer;
+          background:#f8fafc;
+          transition:border-color 0.2s, background 0.2s;
+          margin-bottom:14px;
+          display:flex;
+          align-items:center;
+          gap:14px;
+          justify-content:center;
+          flex-wrap:wrap;">
+        <div style="font-size:22px;line-height:1;">📂</div>
+        <div style="text-align:left;">
+          <p style="font-size:13px;color:var(--texto-oscuro);margin:0 2px 0;font-weight:500;">
+            Arrastra aquí tu fichero CSV
+          </p>
+          <p style="font-size:11.5px;color:var(--texto-gris);margin:0;">
+            o haz clic para seleccionarlo
+          </p>
+        </div>
+        <input type="file" name="archivo" id="archivo" accept=".csv"
+               style="display:none;" onchange="mostrarNombre(this)">
+        <button type="button" onclick="document.getElementById('archivo').click()"
+                class="btn-filtrar" style="padding:5px 16px;font-size:12.5px;">
+          Elegir fichero CSV
+        </button>
+        <p id="nombre-fichero" style="margin:10px 0 0;font-size:12px;color:var(--azul-btn);font-weight:500;"></p>
+      </div>
+
+      <!-- Info formato -->
+      <div style="background:#f0f3f7;border-radius:4px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:var(--texto-gris);border-left:3px solid var(--azul-btn);">
+        <strong style="color:var(--texto-oscuro);display:block;margin-bottom:4px;">Formato esperado (CSV Google Contacts):</strong>
+        Columnas: <code>First Name</code>, <code>Last Name</code>, <code>Notes</code>, <code>Labels</code>
+        <br>La importación crea contactos nuevos y actualiza los existentes por nombre.
+      </div>
+
+      <div style="display:flex;gap:8px;">
+        {{ form.submit(class="btn-form-accion", id="btn-importar") }}
+        <a href="{{ url_for('contactos') }}" class="btn-form-accion btn-form-cancel"
+           style="text-decoration:none;text-align:center;">Cancelar</a>
+      </div>
+    </form>
+  </div>
+
+  <!-- PANEL RESULTADO -->
+  {% if resultado %}
+  <div class="form-card" style="flex:1;min-width:300px;">
+    <h3>Resultado de la importación</h3>
+
+    {% if resultado.get('error') %}
+      <div class="alert alert-danger" style="font-size:12.5px;">
+        <strong>Error:</strong> {{ resultado.error }}
+      </div>
+    {% else %}
+      <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
+        <div style="flex:1;min-width:100px;background:#eaf3de;border-radius:4px;padding:14px;text-align:center;">
+          <div style="font-size:28px;font-weight:600;color:#3b6d11;">{{ resultado.nuevos }}</div>
+          <div style="font-size:12px;color:#3b6d11;margin-top:2px;">Nuevos</div>
+        </div>
+        <div style="flex:1;min-width:100px;background:#e6f1fb;border-radius:4px;padding:14px;text-align:center;">
+          <div style="font-size:28px;font-weight:600;color:#185fa5;">{{ resultado.actualizados }}</div>
+          <div style="font-size:12px;color:#185fa5;margin-top:2px;">Actualizados</div>
+        </div>
+        <div style="flex:1;min-width:100px;background:{% if resultado.errores %}#fcebeb{% else %}#f0f3f7{% endif %};border-radius:4px;padding:14px;text-align:center;">
+          <div style="font-size:28px;font-weight:600;color:{% if resultado.errores %}#a32d2d{% else %}#888{% endif %};">{{ resultado.errores | length }}</div>
+          <div style="font-size:12px;color:{% if resultado.errores %}#a32d2d{% else %}#888{% endif %};margin-top:2px;">Errores</div>
+        </div>
+      </div>
+
+      {% if resultado.errores %}
+      <div style="background:#fcebeb;border-radius:4px;padding:10px 14px;font-size:12px;">
+        <strong style="color:#a32d2d;display:block;margin-bottom:6px;">Registros con error:</strong>
+        {% for err in resultado.errores %}
+          <div style="color:#791f1f;padding:2px 0;">• {{ err }}</div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <div style="margin-top:14px;">
+        <a href="{{ url_for('contactos') }}" class="btn-filtrar" style="text-decoration:none;">
+          Ver contactos importados
+        </a>
+      </div>
+    {% endif %}
+  </div>
+  {% else %}
+  <!-- Panel informativo cuando aún no se ha importado -->
+  <div class="form-card" style="flex:1;min-width:300px;background:#f8fafc;">
+    <h3 style="color:var(--texto-gris);">Información</h3>
+    <p style="font-size:12.5px;color:var(--texto-gris);line-height:1.6;">
+      La importación procesará el fichero CSV y realizará las siguientes acciones:
+    </p>
+    <ul style="font-size:12.5px;color:var(--texto-gris);line-height:1.8;padding-left:18px;">
+      <li><strong style="color:var(--texto-oscuro);">Nuevos contactos:</strong> se crearán si no existen por nombre.</li>
+      <li><strong style="color:var(--texto-oscuro);">Contactos existentes:</strong> se actualizarán apellidos, notas y etiquetas.</li>
+      <li><strong style="color:var(--texto-oscuro);">Etiquetas:</strong> se crean automáticamente si no existen.</li>
+    </ul>
+    <p style="font-size:12px;color:var(--texto-gris);margin-top:10px;">
+      Formato compatible: exportación CSV de Google Contacts.
+    </p>
+  </div>
+  {% endif %}
+
+</div>
+
+<script>
+var dropZone = document.getElementById('drop-zone');
+
+dropZone.addEventListener('dragover', function(e) {
+  e.preventDefault();
+  dropZone.style.borderColor = 'var(--azul-btn)';
+  dropZone.style.background = 'var(--acento)';
+});
+
+dropZone.addEventListener('dragleave', function() {
+  dropZone.style.borderColor = 'var(--gris-borde)';
+  dropZone.style.background = '#f8fafc';
+});
+
+dropZone.addEventListener('drop', function(e) {
+  e.preventDefault();
+  dropZone.style.borderColor = 'var(--gris-borde)';
+  dropZone.style.background = '#f8fafc';
+  var files = e.dataTransfer.files;
+  if (files.length > 0 && files[0].name.endsWith('.csv')) {
+    document.getElementById('archivo').files = files;
+    mostrarNombre(document.getElementById('archivo'));
+  }
+});
+
+function mostrarNombre(input) {
+  var p = document.getElementById('nombre-fichero');
+  if (input.files && input.files[0]) {
+    p.textContent = '✓ ' + input.files[0].name;
+    dropZone.style.borderColor = 'var(--azul-btn)';
+  } else {
+    p.textContent = '';
+  }
+}
+</script>
+
+{% endblock %}

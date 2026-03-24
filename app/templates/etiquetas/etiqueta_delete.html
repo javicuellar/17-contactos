@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}Borrar Etiqueta{% endblock %}
+
+{% block contenido %}
+
+<div class="breadcrumb-bar">
+  <a href="{{ url_for('contactos') }}">🏠</a>
+  <span class="sep"> &gt; </span>
+  <a href="{{ url_for('etiquetas') }}">Catálogos</a>
+  <span class="sep"> &gt; </span>
+  <a href="{{ url_for('etiquetas') }}">Mantenimiento de Etiquetas</a>
+  <span class="sep"> &gt; </span>
+  <span class="current">Borrar etiqueta</span>
+</div>
+
+
+<div class="form-card">
+  <h3>Confirmar eliminación</h3>
+
+  <div class="alert alert-warning" style="display:flex;align-items:center;gap:8px;">
+    <span style="font-size:18px;">⚠️</span>
+    <span>¿Estás seguro de borrar la etiqueta: <strong>{{ eti.nombre }}</strong>?</span>
+  </div>
+
+  <div class="alert alert-danger" style="font-size:12.5px;">
+    <strong>Atención:</strong> Si borras la etiqueta, se eliminarán todos los contactos asociados a ella.
+  </div>
+
+  <form class="form-horizontal" method="post">
+    <div class="form-group" style="display:flex;gap:8px;margin-top:12px;">
+      {{ form.csrf_token }}
+      {{ form.si(class="btn-filtrar") }}
+      {{ form.no(class="btn-limpiar") }}
+    </div>
+  </form>
+</div>
+
+{% endblock %}

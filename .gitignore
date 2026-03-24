@@ -1,0 +1,29 @@
+#  No llevamos al repositorio las carpetas y ficheros siguientes
+
+# Ficheros log de sincronización PC a NAS
+**/*.log
+
+#  archivos __pycache__
+**/__pycache__
+
+# variables de entorno
+**/env
+**/venv
+
+# Instancias (directorio personal)
+**/instancias
+
+# Base de datos SQLite
+**/db.sqlite3
+**/*.db
+**/sincro*.bat
+
+# cerificados y claves privadas
+**/*.pem
+**/*.key
+
+# excluimos boobstrap
+**/bootstrap*
+
+# excluimos las versiones
+**/versiones

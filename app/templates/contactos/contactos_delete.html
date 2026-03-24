@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}Borrar Contacto{% endblock %}
+
+{% block contenido %}
+
+<div class="breadcrumb-bar">
+  <a href="{{ url_for('contactos') }}">🏠</a>
+  <span class="sep"> &gt; </span>
+  <a href="{{ url_for('contactos') }}">Contactos</a>
+  <span class="sep"> &gt; </span>
+  <a href="{{ url_for('contactos') }}">Mantenimiento de Contactos</a>
+  <span class="sep"> &gt; </span>
+  <span class="current">Borrar contacto</span>
+</div>
+
+
+<div class="form-card">
+  <h3>Confirmar eliminación</h3>
+
+  <div class="alert alert-warning" style="display:flex;align-items:center;gap:8px;">
+    <span style="font-size:18px;">⚠️</span>
+    <span>¿Estás seguro de que deseas borrar el contacto: <strong>{{ cont.nombre }}</strong>?</span>
+  </div>
+
+  <form class="form-horizontal" method="post"
+        action="{{ request.path }}{% if filtro_qs %}?filtro_qs={{ filtro_qs | urlencode }}{% endif %}">
+    <div class="form-group" style="display:flex;gap:8px;margin-top:12px;">
+      {{ form.csrf_token }}
+      {{ form.si(class="btn-filtrar") }}
+      {{ form.no(class="btn-limpiar") }}
+    </div>
+  </form>
+</div>
+
+{% endblock %}

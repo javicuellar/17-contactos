@@ -1,0 +1,290 @@
+{% extends "base.html" %}
+
+{% block title %}Mantenimiento de Contactos{% endblock %}
+
+{% block contenido %}
+
+<div class="breadcrumb-bar">
+  <a href="{{ url_for('contactos') }}">🏠</a>
+  <span class="sep"> &gt; </span>
+  <a href="{{ url_for('contactos') }}">Contactos</a>
+  <span class="sep"> &gt; </span>
+  <span class="current">Mantenimiento de Contactos</span>
+</div>
+
+<!-- FILTROS -->
+<div class="filtros-panel">
+  <div class="filtros-titulo">Filtros</div>
+  <form method="GET" action="{{ url_for('contactos') }}" id="form-filtros-cont">
+    <div class="filtros-linea">
+      <div class="filtro-campo">
+        <label for="f_nombre">Nombre:</label>
+        <input type="text" id="f_nombre" name="nombre" class="filtro-input"
+               value="{{ request.args.get('nombre','') }}" autocomplete="off">
+      </div>
+      <div class="filtro-campo">
+        <label for="f_etiqueta">Etiqueta:</label>
+        <select id="f_etiqueta" name="etiqueta_id" class="filtro-input filtro-select"
+                onchange="this.form.submit()">
+          <option value="">-- Todas --</option>
+          {% for eti in etiquetas %}
+            <option value="{{ eti.id }}"
+              {% if request.args.get('etiqueta_id','') == eti.id|string %}selected{% endif %}>
+              {{ eti.nombre }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="filtro-btns">
+        <button type="submit" class="btn-filtrar">
+          <span class="glyphicon glyphicon-filter"></span> Filtrar
+        </button>
+        <button type="button" class="btn-limpiar" onclick="limpiarFiltros('form-filtros-cont')">
+          <span class="glyphicon glyphicon-ban-circle"></span> Borrar filtros
+        </button>
+      </div>
+    </div>
+  </form>
+</div>
+
+{% if current_user.is_authenticated and current_user.is_admin() %}
+<button class="btn-nuevo" onclick="abrirModalNuevo()">
+  <span class="glyphicon glyphicon-plus"></span> Nuevo contacto
+</button>
+{% endif %}
+
+<!-- TABLA -->
+<div class="content-card">
+  <table class="tabla-datos">
+    <thead>
+      <tr>
+        <th style="width:25%">Nombre <span class="sort-icon">&#8645;</span></th>
+                <th style="width:12.5%">Etiqueta <span class="sort-icon">&#8645;</span></th>
+        <th class="col-notas" style="width:37.5%">Notas <span class="sort-icon">&#8645;</span></th>
+        <th class="col-acciones" style="width:80px;">Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for cont in contactos %}
+      <tr>
+        <td>{{ cont.nombre }}</td>
+        <td>
+          {% for eti in cont.etiquetas_obj %}
+            <span style="background:#e3edf8;border-radius:3px;padding:2px 7px;font-size:11.5px;color:var(--azul-activo);display:inline-block;margin:1px 0;">
+              {{ eti.nombre }}
+            </span>
+          {% endfor %}
+        </td>
+        <td class="col-notas" style="color:var(--texto-gris);font-size:12px;">
+          {{ cont.notas[:100] if cont.notas else '' }}{% if cont.notas and cont.notas|length > 100 %}...{% endif %}
+        </td>
+        <td class="col-acciones">
+          {% if current_user.is_authenticated and current_user.is_admin() %}
+          <a href="#" class="icon-lupa btn-editar-cont" title="Editar"
+             data-id="{{ cont.id }}"
+             data-nombre="{{ cont.nombre | e }}"
+             data-notas="{{ cont.notas | e if cont.notas else '' }}"
+             data-etiquetas="{{ cont.etiquetas_obj | map(attribute='id') | list | tojson | e }}">
+            <span class="glyphicon glyphicon-pencil"></span>
+          </a>
+          <a href="#" class="icon-lupa btn-borrar-cont" title="Borrar"
+             style="margin-left:3px;border-color:#c0392b;color:#c0392b;"
+             data-id="{{ cont.id }}"
+             data-nombre="{{ cont.nombre | e }}">
+            <span class="glyphicon glyphicon-trash"></span>
+          </a>
+          {% else %}
+          <a href="#" class="icon-lupa btn-editar-cont" title="Ver"
+             data-id="{{ cont.id }}"
+             data-nombre="{{ cont.nombre | e }}"
+             data-notas="{{ cont.notas | e if cont.notas else '' }}"
+             data-etiquetas="{{ cont.etiquetas_obj | map(attribute='id') | list | tojson | e }}">
+            <span class="glyphicon glyphicon-search"></span>
+          </a>
+          {% endif %}
+        </td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="4" class="tabla-vacia">No se encontraron contactos.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+    <tfoot>
+      <tr>
+        <th colspan="3" style="text-align:right;padding:8px 12px;font-size:12px;">Total de registros:</th>
+        <th style="text-align:center;padding:8px 12px;font-size:12px;">{{ contactos | length }}</th>
+      </tr>
+    </tfoot>
+  </table>
+</div>
+
+
+<!-- ══ MODAL NUEVO / EDITAR CONTACTO ══ -->
+<div id="modal-cont" class="modal-overlay" style="display:none;" onclick="cerrarModalSiFondo(event,'modal-cont')">
+  <div class="modal-caja" style="width:760px;">
+    <div class="modal-cabecera">
+      <span id="modal-cont-titulo">Nuevo contacto</span>
+      <button class="modal-cerrar" onclick="cerrarModal('modal-cont')">&times;</button>
+    </div>
+    <form id="form-cont" method="post" action="{{ url_for('contactos_new') }}{% if filtro_qs %}?filtro_qs={{ filtro_qs | urlencode }}{% endif %}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="modal-cuerpo" style="display:flex;gap:18px;">
+
+        <!-- Izquierda: campos datos -->
+        <div style="flex:1;min-width:0;">
+          <div id="cont-errores"></div>
+
+          <div style="margin-bottom:11px;">
+            <label class="lbl-modal">Nombre *</label>
+            <input type="text" name="nombre" id="cont-nombre"
+                   class="form-control" style="height:30px;font-size:12.5px;" required autocomplete="off">
+          </div>
+          <div style="margin-bottom:6px;">
+            <label class="lbl-modal">Etiquetas</label>
+            <select name="Etiquetas" id="cont-etiquetas" multiple size="7"
+                    class="form-control"
+                    style="font-size:12.5px;padding:3px;border:1px solid #b0bec5;border-radius:3px;">
+              {% for eti in etiquetas %}
+              <option value="{{ eti.id }}">{{ eti.nombre }}</option>
+              {% endfor %}
+            </select>
+            <small style="color:var(--texto-gris);font-size:11px;margin-top:3px;display:block;">
+              Mantén <kbd style="font-size:10px;background:#f0f3f7;border:1px solid #999;padding:1px 4px;border-radius:2px;color:#1a1a1a;font-weight:600;">Ctrl</kbd>
+              pulsado para seleccionar varias
+            </small>
+          </div>
+        </div>
+
+        <!-- Derecha: notas -->
+        <div style="flex:1;min-width:0;display:flex;flex-direction:column;">
+          <label class="lbl-modal">Notas</label>
+          <textarea name="notas" id="cont-notas"
+                    class="form-control"
+                    style="flex:1;min-height:220px;font-size:12.5px;resize:vertical;"></textarea>
+        </div>
+
+      </div>
+      <div class="modal-pie">
+        <button type="submit" class="btn-modal-ok">
+          <span class="glyphicon glyphicon-ok"></span> Enviar
+        </button>
+        <button type="button" class="btn-modal-cancel" onclick="cerrarModal('modal-cont')">
+          <span class="glyphicon glyphicon-remove"></span> Cancelar
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+
+<!-- ══ MODAL BORRAR CONTACTO ══ -->
+<div id="modal-cont-del" class="modal-overlay" style="display:none;" onclick="cerrarModalSiFondo(event,'modal-cont-del')">
+  <div class="modal-caja" style="width:420px;">
+    <div class="modal-cabecera" style="background:#c0392b;">
+      <span>Dar de baja contacto</span>
+      <button class="modal-cerrar" onclick="cerrarModal('modal-cont-del')">&times;</button>
+    </div>
+    <div class="modal-cuerpo">
+      <div style="display:flex;align-items:flex-start;gap:12px;">
+        <span style="font-size:26px;">⚠️</span>
+        <p style="margin:0;font-size:13px;color:var(--texto-oscuro);">
+          ¿Estás seguro de dar de baja el contacto
+          <strong id="del-cont-nombre" style="color:#c0392b;"></strong>?
+          <br><span style="font-size:12px;color:var(--texto-gris);margin-top:4px;display:block;">Esta acción no se puede deshacer.</span>
+        </p>
+      </div>
+    </div>
+    <form id="form-cont-del" method="post" action="">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="modal-pie">
+        <button type="submit" class="btn-modal-danger">
+          <span class="glyphicon glyphicon-ban-circle"></span> Sí, dar de baja
+        </button>
+        <button type="button" class="btn-modal-cancel" onclick="cerrarModal('modal-cont-del')">
+          <span class="glyphicon glyphicon-remove"></span> No, cancelar
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+
+<script>
+var _contBase = "{{ url_for('contactos_new') }}".replace(/\/new$/, '');
+var _filtroQs = "{{ filtro_qs }}";
+
+function _urlCont(sufijo) {
+  return _contBase + sufijo + (_filtroQs ? '?filtro_qs=' + encodeURIComponent(_filtroQs) : '');
+}
+
+function abrirModalNuevo() {
+  document.getElementById('modal-cont-titulo').textContent = 'Nuevo contacto';
+  document.getElementById('form-cont').action = _urlCont('/new');
+  document.getElementById('cont-nombre').value    = '';
+
+  document.getElementById('cont-notas').value     = '';
+  document.getElementById('cont-errores').innerHTML = '';
+  _desmarcarEtiquetas();
+  document.getElementById('modal-cont').style.display = 'flex';
+  setTimeout(function(){ document.getElementById('cont-nombre').focus(); }, 80);
+}
+
+function _abrirEditar(id, nombre, notas, etiquetaIds) {
+  document.getElementById('modal-cont-titulo').textContent = 'Editar contacto';
+  document.getElementById('form-cont').action = _urlCont('/' + id + '/edit');
+  document.getElementById('cont-nombre').value    = nombre;
+
+  document.getElementById('cont-notas').value     = notas;
+  document.getElementById('cont-errores').innerHTML = '';
+  _marcarEtiquetas(etiquetaIds);
+  document.getElementById('modal-cont').style.display = 'flex';
+  setTimeout(function(){ document.getElementById('cont-nombre').focus(); }, 80);
+}
+
+function _abrirBorrar(id, nombre) {
+  document.getElementById('del-cont-nombre').textContent = nombre;
+  document.getElementById('form-cont-del').action = _urlCont('/' + id + '/delete');
+  document.getElementById('modal-cont-del').style.display = 'flex';
+}
+
+/* Delegación de eventos — lee datos desde atributos data-* */
+document.addEventListener('DOMContentLoaded', function() {
+  document.addEventListener('click', function(e) {
+    var btn = e.target.closest('.btn-editar-cont');
+    if (btn) {
+      e.preventDefault();
+      var ids = [];
+      try { ids = JSON.parse(btn.dataset.etiquetas || '[]'); } catch(ex) {}
+      _abrirEditar(
+        btn.dataset.id,
+        btn.dataset.nombre   || '',
+        btn.dataset.apellidos || '',
+        btn.dataset.notas    || '',
+        ids
+      );
+      return;
+    }
+    var del = e.target.closest('.btn-borrar-cont');
+    if (del) {
+      e.preventDefault();
+      _abrirBorrar(del.dataset.id, del.dataset.nombre || '');
+    }
+  });
+});
+
+function _desmarcarEtiquetas() {
+  var opts = document.getElementById('cont-etiquetas').options;
+  for (var i = 0; i < opts.length; i++) opts[i].selected = false;
+}
+
+function _marcarEtiquetas(ids) {
+  _desmarcarEtiquetas();
+  var opts = document.getElementById('cont-etiquetas').options;
+  for (var i = 0; i < opts.length; i++) {
+    opts[i].selected = ids.indexOf(parseInt(opts[i].value)) !== -1;
+  }
+}
+</script>
+
+{% endblock %}

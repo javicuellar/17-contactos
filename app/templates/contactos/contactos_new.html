@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block title %}{% if id is defined and id %}Editar Contacto{% else %}Nuevo Contacto{% endif %}{% endblock %}
+
+{% block contenido %}
+
+<div class="breadcrumb-bar">
+  <a href="{{ url_for('contactos') }}">🏠</a>
+  <span class="sep"> &gt; </span>
+  <a href="{{ url_for('contactos') }}">Contactos</a>
+  <span class="sep"> &gt; </span>
+  <a href="{{ url_for('contactos') }}{% if filtro_qs %}?{{ filtro_qs }}{% endif %}">Mantenimiento de Contactos</a>
+  <span class="sep"> &gt; </span>
+  <span class="current">{% if id is defined and id %}Editar contacto{% else %}Nuevo contacto{% endif %}</span>
+</div>
+
+
+<form class="form-horizontal" method="post" enctype="multipart/form-data"
+      action="{{ request.path }}{% if filtro_qs %}?filtro_qs={{ filtro_qs | urlencode }}{% endif %}">
+  <div style="display:flex;gap:20px;flex-wrap:wrap;align-items:stretch;">
+
+    <!-- COLUMNA IZQUIERDA: datos -->
+    <div class="form-card" style="flex:1;min-width:280px;max-width:420px;">
+      <h3>Datos del contacto</h3>
+
+      {% for field, errors in form.errors.items() %}
+        <div class="alert alert-danger">
+          {{ form[field].label }}: {{ ', '.join(errors) }}
+        </div>
+      {% endfor %}
+
+      {{ form.csrf_token }}
+
+      <div class="form-group" style="margin-bottom:12px;">
+        {{ form.nombre.label(style="font-size:12.5px;font-weight:500;display:block;margin-bottom:4px;") }}
+        {{ form.nombre(class="form-control") }}
+      </div>
+
+      <div class="form-group" style="margin-bottom:12px;">
+        {{ form.apellidos.label(style="font-size:12.5px;font-weight:500;display:block;margin-bottom:4px;") }}
+        {{ form.apellidos(class="form-control") }}
+      </div>
+
+      <div class="form-group" style="margin-bottom:16px;">
+        {{ form.Etiquetas.label(style="font-size:12.5px;font-weight:500;display:block;margin-bottom:4px;") }}
+        {{ form.Etiquetas(class="form-control", size="6",
+            style="height:auto;padding:4px;font-size:12.5px;width:100%;border:1px solid #b0bec5;border-radius:3px;") }}
+        <small style="color:var(--texto-gris);font-size:11px;margin-top:4px;display:block;">
+          Mantén <kbd style="font-size:10px;background:#f0f3f7;border:1px solid #999;padding:1px 4px;border-radius:2px;color:#1a1a1a;font-weight:600;">Ctrl</kbd>
+          pulsado para seleccionar varias etiquetas
+        </small>
+      </div>
+
+      <div style="display:flex;gap:8px;margin-top:14px;">
+        {{ form.submit(class="btn-form-accion") }}
+        <a href="{{ url_for('contactos') }}{% if filtro_qs %}?{{ filtro_qs }}{% endif %}"
+           class="btn-form-accion btn-form-cancel" style="text-decoration:none;text-align:center;">
+          Cancelar
+        </a>
+      </div>
+    </div>
+
+    <!-- COLUMNA DERECHA: notas -->
+    <div class="form-card" style="flex:1;min-width:280px;display:flex;flex-direction:column;">
+      <h3>Notas</h3>
+      <div class="form-group" style="flex:1;display:flex;flex-direction:column;">
+        {{ form.notas.label(style="font-size:12.5px;font-weight:500;display:block;margin-bottom:4px;") }}
+        {{ form.notas(rows="10", class="form-control", style="resize:vertical;font-size:12.5px;flex:1;min-height:200px;") }}
+      </div>
+    </div>
+
+  </div>
+</form>
+
+{% endblock %}

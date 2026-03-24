@@ -1,0 +1,22 @@
+#  Aplicación Administración de Contactos
+services:
+  python-17-contactos:
+    container_name: python-17-contactos
+    image: 'python:3.14-slim'
+    volumes:
+      - .:/usr/python:ro                                 # código en el contenedor (solo lectura)
+      # - /volume1/docker/python_config:/usr/config:ro     # config globales (solo lectura)
+      # - /volume1/docker/python_bd/sqlite:/usr/bd:rw      # BD globales (lectura/escritura)
+      - ./data:/usr/bd:rw                          # BD globales (lectura/escritura)
+    working_dir: /usr/python
+    restart: unless-stopped
+    env_file:
+      - .env                                    # variables locales del proyecto .env
+      # - /usr/config/config.env                # variables globales desde volumen
+    # environment:
+      # - ENTORNO_JAVIER=produccion             # también puedes definir variables extra aquí
+    network_mode: host
+    # ports:
+      #- "${APP_PORT_CONTACTOS}:5010"            # usa variable del .env en el puerto
+      #- 5011:5011                                # puerto fijo (sin variable)
+    command: "./ejecutar.sh"

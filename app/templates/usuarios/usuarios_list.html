@@ -3,7 +3,7 @@
 {% block contenido %}
 
 <div class="breadcrumb-bar">
-  <a href="{{ url_for('contactos') }}">🏠</a>
+  <a href="{{ url_for('personas') }}">🏠</a>
   <span class="sep"> &gt; </span>
   <span class="current">Mantenimiento de Usuarios</span>
 </div>
@@ -15,9 +15,9 @@
   <form method="GET" action="{{ url_for('usuarios_list') }}" id="form-filtros-usr">
     <div class="filtros-linea">
       <div class="filtro-campo">
-        <label for="f_login">Login:</label>
-        <input type="text" id="f_login" name="username" class="filtro-input"
-               value="{{ request.args.get('username','') }}" autocomplete="off">
+        <label for="f_usuario">Usuario:</label>
+        <input type="text" id="f_usuario" name="usuario" class="filtro-input"
+               value="{{ request.args.get('usuario','') }}" autocomplete="off">
       </div>
       <div class="filtro-campo">
         <label for="f_nombre">Nombre:</label>
@@ -45,8 +45,8 @@
   <table class="tabla-datos">
     <thead>
       <tr>
-        <th style="width:20%">Login <span class="sort-icon">&#8645;</span></th>
-        <th style="width:30%">Nombre completo <span class="sort-icon">&#8645;</span></th>
+        <th style="width:20%">Usuario <span class="sort-icon">&#8645;</span></th>
+        <th style="width:30%">Nombre <span class="sort-icon">&#8645;</span></th>
         <th style="width:28%">Email <span class="sort-icon">&#8645;</span></th>
         <th style="width:10%">Admin</th>
         <th class="col-acciones" style="width:80px;">Acciones</th>
@@ -55,7 +55,7 @@
     <tbody>
       {% for u in usuarios %}
       <tr>
-        <td><strong>{{ u.username }}</strong></td>
+        <td><strong>{{ u.usuario }}</strong></td>
         <td>{{ u.nombre }}</td>
         <td style="color:var(--texto-gris);font-size:12px;">{{ u.email }}</td>
         <td style="text-align:center;">
@@ -67,13 +67,13 @@
         </td>
         <td class="col-acciones">
           <a href="#" class="icon-lupa" title="Editar"
-             onclick="abrirModalEditar({{ u.id }},'{{ u.username|e }}','{{ u.nombre|e }}','{{ u.email|e }}',{{ 'true' if u.admin else 'false' }}); return false;">
+             onclick="abrirModalEditar({{ u.id }},'{{ u.usuario|e }}','{{ u.nombre|e }}','{{ u.email|e }}',{{ 'true' if u.admin else 'false' }}); return false;">
             <span class="glyphicon glyphicon-pencil"></span>
           </a>
           {% if u.id != current_user.id %}
           <a href="#" class="icon-lupa" title="Eliminar"
              style="margin-left:3px;border-color:#c0392b;color:#c0392b;"
-             onclick="abrirModalBorrar({{ u.id }},'{{ u.username|e }}'); return false;">
+             onclick="abrirModalBorrar({{ u.id }},'{{ u.usuario|e }}'); return false;">
             <span class="glyphicon glyphicon-trash"></span>
           </a>
           {% endif %}
@@ -105,8 +105,8 @@
       <div class="modal-cuerpo">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
           <div>
-            <label class="lbl-modal">Login *</label>
-            <input type="text" name="username" id="usr-login"
+            <label class="lbl-modal">Usuario *</label>
+            <input type="text" name="usuario" id="usr-usuario"
                    class="form-control" style="height:30px;font-size:12.5px;"
                    required autocomplete="off">
           </div>
@@ -120,7 +120,7 @@
                    autocomplete="new-password">
           </div>
           <div>
-            <label class="lbl-modal">Nombre completo</label>
+            <label class="lbl-modal">Nombre</label>
             <input type="text" name="nombre" id="usr-nombre"
                    class="form-control" style="height:30px;font-size:12.5px;">
           </div>
@@ -192,20 +192,20 @@ var _usrBase = "{{ url_for('usuarios_new') }}".replace(/\/new$/, '');
 function abrirModalNuevo() {
   document.getElementById('modal-usr-titulo').textContent = 'Nuevo usuario';
   document.getElementById('form-usr').action = _usrBase + '/new';
-  document.getElementById('usr-login').value   = '';
+  document.getElementById('usr-usuario').value   = '';
   document.getElementById('usr-pwd').value     = '';
   document.getElementById('usr-nombre').value  = '';
   document.getElementById('usr-email').value   = '';
   document.getElementById('usr-admin').checked = false;
   document.getElementById('pwd-hint').style.display = 'none';
   document.getElementById('modal-usr').style.display = 'flex';
-  setTimeout(function(){ document.getElementById('usr-login').focus(); }, 80);
+  setTimeout(function(){ document.getElementById('usr-usuario').focus(); }, 80);
 }
 
-function abrirModalEditar(id, login, nombre, email, admin) {
+function abrirModalEditar(id, usuario, nombre, email, admin) {
   document.getElementById('modal-usr-titulo').textContent = 'Editar usuario';
   document.getElementById('form-usr').action = _usrBase + '/' + id + '/edit';
-  document.getElementById('usr-login').value   = login;
+  document.getElementById('usr-usuario').value   = usuario;
   document.getElementById('usr-pwd').value     = '';
   document.getElementById('usr-nombre').value  = nombre;
   document.getElementById('usr-email').value   = email;
@@ -215,8 +215,8 @@ function abrirModalEditar(id, login, nombre, email, admin) {
   setTimeout(function(){ document.getElementById('usr-nombre').focus(); }, 80);
 }
 
-function abrirModalBorrar(id, login) {
-  document.getElementById('del-usr-nombre').textContent = login;
+function abrirModalBorrar(id, usuario) {
+  document.getElementById('del-usr-nombre').textContent = usuario;
   document.getElementById('form-usr-del').action = _usrBase + '/' + id + '/delete';
   document.getElementById('modal-usr-del').style.display = 'flex';
 }

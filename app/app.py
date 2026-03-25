@@ -45,9 +45,8 @@ login_manager.login_view = "login"
 from .usuarios import usuarios_bp
 app.register_blueprint(usuarios_bp)
 
-
-from .contactos import contactos_bp
-app.register_blueprint(contactos_bp)
+from .personas import personas_bp
+app.register_blueprint(personas_bp)
 
 from .etiquetas import etiquetas_bp
 app.register_blueprint(etiquetas_bp)

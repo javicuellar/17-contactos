@@ -5,9 +5,10 @@ from wtforms.validators import DataRequired, Optional
 
 
 
+
 class formContacto(FlaskForm):                      
-	nombre 		= StringField("Nombre:", validators=[DataRequired("Tienes que introducir el dato")])
-	apellidos 	= StringField("Apellidos:", validators=[Optional()])
+	apodo 		= StringField("Apodo:", validators=[DataRequired("Tienes que introducir el dato")])
+	nombre 		= StringField("Nombre:", validators=[Optional()])
 	notas 		= TextAreaField("Notas:")
 	Etiquetas 	= SelectMultipleField("Etiquetas:", validators=[Optional()], choices=[])
 	submit 		= SubmitField('Enviar')

@@ -10,16 +10,19 @@ from app.etiquetas.models import Etiquetas
 from app.comunes.utilidades import procesar_archivo
 
 
+
+
 def sin_tildes(s):
     return unicodedata.normalize('NFD', s).encode('ascii', 'ignore').decode('ascii').lower()
 
 
 # ── LISTA DE PERSONAS (solo las del usuario logado) ──────────────────────────
-@app.route('/contactos/')
+@app.route('/personas/')
 @login_required
-def contactos():
+def personas():
     etiquetas = Etiquetas.query.order_by(Etiquetas.nombre.asc()).all()
 
+    f_apodo    = request.args.get('apodo', '').strip()
     f_nombre   = request.args.get('nombre', '').strip()
     f_etiqueta = request.args.get('etiqueta_id', '').strip()
 
@@ -33,7 +36,11 @@ def contactos():
                .filter(Rel_persona_etiqueta.fecha_baja == None).all()]
         query = query.filter(Personas.id.in_(ids))
 
-    personas = query.order_by(Personas.nombre.asc()).all()
+    personas = query.order_by(Personas.apodo.asc()).all()
+
+    if f_apodo:
+        busq = sin_tildes(f_apodo)
+        personas = [p for p in personas if busq in sin_tildes(p.apodo or '')]
 
     if f_nombre:
         busq = sin_tildes(f_nombre)
@@ -48,28 +55,30 @@ def contactos():
                            for r in rels if Etiquetas.query.get(r.EtiquetaId)]
 
     filtro_qs = request.query_string.decode('utf-8')
-    return render_template('contactos/contactos.html',
-                           contactos=personas,
+    return render_template('personas/personas.html',
+                           personas=personas,
                            etiquetas=etiquetas,
                            etiqueta=None,
                            filtro_qs=filtro_qs)
 
 
 # ── ALTA ─────────────────────────────────────────────────────────────────────
-@app.route('/contactos/new', methods=['post'])
+@app.route('/personas/new', methods=['post'])
 @login_required
-def contactos_new():
+def personas_new():
+    apodo   = request.form.get('apodo', '').strip()
     nombre  = request.form.get('nombre', '').strip()
     notas   = request.form.get('notas', '').strip()
     eti_ids = request.form.getlist('Etiquetas')
 
-    if nombre:
+    if apodo:
         now = datetime.now()
         p = Personas()
         p.UsuarioId    = current_user.id
+        p.apodo        = apodo
         p.nombre       = nombre
         p.notas        = notas
-        p.usuario_alta = current_user.username
+        p.usuario_alta = current_user.usuario
         p.fecha_alta   = now
         db.session.add(p)
         db.session.flush()   # obtener p.id antes de commit
@@ -81,7 +90,7 @@ def contactos_new():
                     rel = Rel_persona_etiqueta()
                     rel.PersonaId    = p.id
                     rel.EtiquetaId   = eid
-                    rel.usuario_alta = current_user.username
+                    rel.usuario_alta = current_user.usuario
                     rel.fecha_alta   = now
                     db.session.add(rel)
             except ValueError:
@@ -89,21 +98,22 @@ def contactos_new():
         db.session.commit()
 
     filtro_qs = request.args.get('filtro_qs', '')
-    return redirect(url_for('contactos') + ('?' + filtro_qs if filtro_qs else ''))
+    return redirect(url_for('personas') + ('?' + filtro_qs if filtro_qs else ''))
 
 
 # ── EDICIÓN ───────────────────────────────────────────────────────────────────
-@app.route('/contactos/<int:id>/edit', methods=['post'])
+@app.route('/personas/<int:id>/edit', methods=['post'])
 @login_required
-def contactos_edit(id):
+def personas_edit(id):
     p = Personas.query.get_or_404(id)
     if p.UsuarioId != current_user.id and not current_user.is_admin():
         abort(403)
 
     now = datetime.now()
-    p.nombre      = request.form.get('nombre', p.nombre).strip()
+    p.apodo       = request.form.get('apodo', p.apodo).strip()
+    p.nombre      = request.form.get('nombre', p.nombre or '').strip()
     p.notas       = request.form.get('notas', '').strip()
-    p.usuario_mod = current_user.username
+    p.usuario_mod = current_user.usuario
     p.fecha_mod   = now
 
     # Dar de baja etiquetas anteriores y crear las nuevas
@@ -111,7 +121,7 @@ def contactos_edit(id):
                    .filter_by(PersonaId=id)\
                    .filter(Rel_persona_etiqueta.fecha_baja == None).all()
     for rel in rels_activas:
-        rel.usuario_baja = current_user.username
+        rel.usuario_baja = current_user.usuario
         rel.fecha_baja   = now
 
     for eti_id in request.form.getlist('Etiquetas'):
@@ -121,7 +131,7 @@ def contactos_edit(id):
                 rel = Rel_persona_etiqueta()
                 rel.PersonaId    = p.id
                 rel.EtiquetaId   = eid
-                rel.usuario_alta = current_user.username
+                rel.usuario_alta = current_user.usuario
                 rel.fecha_alta   = now
                 db.session.add(rel)
         except ValueError:
@@ -130,19 +140,19 @@ def contactos_edit(id):
     db.session.commit()
 
     filtro_qs = request.args.get('filtro_qs', '')
-    return redirect(url_for('contactos') + ('?' + filtro_qs if filtro_qs else ''))
+    return redirect(url_for('personas') + ('?' + filtro_qs if filtro_qs else ''))
 
 
 # ── BAJA LÓGICA ───────────────────────────────────────────────────────────────
-@app.route('/contactos/<int:id>/delete', methods=['post'])
+@app.route('/personas/<int:id>/delete', methods=['post'])
 @login_required
-def contactos_delete(id):
+def personas_delete(id):
     p = Personas.query.get_or_404(id)
     if p.UsuarioId != current_user.id and not current_user.is_admin():
         abort(403)
 
     now = datetime.now()
-    p.usuario_baja = current_user.username
+    p.usuario_baja = current_user.usuario
     p.fecha_baja   = now
 
     # Baja lógica en relaciones
@@ -150,13 +160,13 @@ def contactos_delete(id):
            .filter_by(PersonaId=id)\
            .filter(Rel_persona_etiqueta.fecha_baja == None).all()
     for rel in rels:
-        rel.usuario_baja = current_user.username
+        rel.usuario_baja = current_user.usuario
         rel.fecha_baja   = now
 
     db.session.commit()
 
     filtro_qs = request.args.get('filtro_qs', '')
-    return redirect(url_for('contactos') + ('?' + filtro_qs if filtro_qs else ''))
+    return redirect(url_for('personas') + ('?' + filtro_qs if filtro_qs else ''))
 
 
 # ── IMPORTAR CSV ──────────────────────────────────────────────────────────────
@@ -187,15 +197,15 @@ def importar():
                     # Buscar persona existente del usuario actual
                     persona = Personas.query\
                               .filter_by(UsuarioId=current_user.id,
-                                         nombre=nombre_completo)\
+                                         apodo=nombre_completo)\
                               .filter(Personas.fecha_baja == None).first()
 
                     if persona is None:
                         persona = Personas()
                         persona.UsuarioId    = current_user.id
-                        persona.nombre       = nombre_completo
+                        persona.apodo        = nombre_completo
                         persona.notas        = contacto.get('notas', '')
-                        persona.usuario_alta = current_user.username
+                        persona.usuario_alta = current_user.usuario
                         persona.fecha_alta   = now
                         db.session.add(persona)
                         db.session.flush()
@@ -203,7 +213,7 @@ def importar():
                     else:
                         if contacto.get('notas'):
                             persona.notas = contacto['notas']
-                        persona.usuario_mod = current_user.username
+                        persona.usuario_mod = current_user.usuario
                         persona.fecha_mod   = now
                         actualizados += 1
 
@@ -212,7 +222,7 @@ def importar():
                                .filter_by(PersonaId=persona.id)\
                                .filter(Rel_persona_etiqueta.fecha_baja == None).all()
                         for rel in rels:
-                            rel.usuario_baja = current_user.username
+                            rel.usuario_baja = current_user.usuario
                             rel.fecha_baja   = now
 
                     # Asignar etiquetas
@@ -230,7 +240,7 @@ def importar():
                             rel = Rel_persona_etiqueta()
                             rel.PersonaId    = persona.id
                             rel.EtiquetaId   = eti.id
-                            rel.usuario_alta = current_user.username
+                            rel.usuario_alta = current_user.usuario
                             rel.fecha_alta   = now
                             db.session.add(rel)
 
@@ -243,4 +253,4 @@ def importar():
             resultado = {'nuevos': nuevos, 'actualizados': actualizados,
                          'errores': errores}
 
-    return render_template('contactos/importar.html', form=form, resultado=resultado)
+    return render_template('personas/importar.html', form=form, resultado=resultado)

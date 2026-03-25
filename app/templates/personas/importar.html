@@ -1,13 +1,13 @@
 {% extends "base.html" %}
 
-{% block title %}Importar Contactos desde Fichero{% endblock %}
+{% block title %}Importar Personas desde Fichero{% endblock %}
 
 {% block contenido %}
 
 <div class="breadcrumb-bar">
-  <a href="{{ url_for('contactos') }}">🏠</a>
+  <a href="{{ url_for('personas') }}">🏠</a>
   <span class="sep"> &gt; </span>
-  <a href="{{ url_for('contactos') }}">Contactos</a>
+  <a href="{{ url_for('personas') }}">Personas</a>
   <span class="sep"> &gt; </span>
   <span class="current">Importar desde fichero</span>
 </div>
@@ -59,12 +59,12 @@
       <div style="background:#f0f3f7;border-radius:4px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:var(--texto-gris);border-left:3px solid var(--azul-btn);">
         <strong style="color:var(--texto-oscuro);display:block;margin-bottom:4px;">Formato esperado (CSV Google Contacts):</strong>
         Columnas: <code>First Name</code>, <code>Last Name</code>, <code>Notes</code>, <code>Labels</code>
-        <br>La importación crea contactos nuevos y actualiza los existentes por nombre.
+        <br>La importación crea personas nuevas y actualiza las existentes por nombre.
       </div>
 
       <div style="display:flex;gap:8px;">
         {{ form.submit(class="btn-form-accion", id="btn-importar") }}
-        <a href="{{ url_for('contactos') }}" class="btn-form-accion btn-form-cancel"
+        <a href="{{ url_for('personas') }}" class="btn-form-accion btn-form-cancel"
            style="text-decoration:none;text-align:center;">Cancelar</a>
       </div>
     </form>
@@ -105,8 +105,8 @@
       {% endif %}
 
       <div style="margin-top:14px;">
-        <a href="{{ url_for('contactos') }}" class="btn-filtrar" style="text-decoration:none;">
-          Ver contactos importados
+        <a href="{{ url_for('personas') }}" class="btn-filtrar" style="text-decoration:none;">
+          Ver personas importadas
         </a>
       </div>
     {% endif %}
@@ -119,8 +119,8 @@
       La importación procesará el fichero CSV y realizará las siguientes acciones:
     </p>
     <ul style="font-size:12.5px;color:var(--texto-gris);line-height:1.8;padding-left:18px;">
-      <li><strong style="color:var(--texto-oscuro);">Nuevos contactos:</strong> se crearán si no existen por nombre.</li>
-      <li><strong style="color:var(--texto-oscuro);">Contactos existentes:</strong> se actualizarán apellidos, notas y etiquetas.</li>
+      <li><strong style="color:var(--texto-oscuro);">Nuevas personas:</strong> se crearán si no existen por nombre.</li>
+      <li><strong style="color:var(--texto-oscuro);">Personas existentes:</strong> se actualizarán nombres, notas y etiquetas.</li>
       <li><strong style="color:var(--texto-oscuro);">Etiquetas:</strong> se crean automáticamente si no existen.</li>
     </ul>
     <p style="font-size:12px;color:var(--texto-gris);margin-top:10px;">

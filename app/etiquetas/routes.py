@@ -5,7 +5,7 @@ from flask_login import login_required, current_user
 from app.app import app, db
 from .models import Etiquetas
 from .forms import formEtiqueta, formSINO
-from app.contactos.models import Rel_contacto_etiqueta
+from app.personas.models import Rel_persona_etiqueta
 
 
 
@@ -33,7 +33,7 @@ def etiquetas(id='0'):
 
 	# Añadir número de contactos por etiqueta para el modal de borrado
 	for eti in etiquetas:
-		eti.num_contactos = Rel_contacto_etiqueta.query.filter_by(EtiquetaId=eti.id).count()
+		eti.num_contactos = Rel_persona_etiqueta.query.filter_by(EtiquetaId=eti.id).count()
 
 	return render_template("etiquetas/etiquetas.html", etiquetas=etiquetas)
 
@@ -85,6 +85,6 @@ def etiqueta_delete(id):
 		db.session.commit()
 		return redirect(url_for("etiquetas"))
 
-	num_contactos = Rel_contacto_etiqueta.query.filter_by(EtiquetaId=id).count()
+	num_contactos = Rel_persona_etiqueta.query.filter_by(EtiquetaId=id).count()
 	form = formSINO()
 	return render_template("etiquetas/etiqueta_delete.html", form=form, eti=eti, num_contactos=num_contactos)

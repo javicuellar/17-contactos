@@ -20,16 +20,16 @@ def load_user(user_id):
 def login():
 	# Control de permisos
 	if current_user.is_authenticated:
-		return redirect(url_for("contactos"))
+		return redirect(url_for("personas"))
 
 	form = LoginForm()
 	if form.validate_on_submit():
-		user=Usuarios.query.filter_by(username=form.username.data).first()
+		user=Usuarios.query.filter_by(usuario=form.usuario.data).first()
 		if user!=None and user.verify_password(form.password.data):
 			login_user(user)
 			next = request.args.get('next')
-			return redirect(next or url_for('contactos'))
-		form.username.errors.append("Usuario o contraseña incorrectas.")
+			return redirect(next or url_for('personas'))
+		form.usuario.errors.append("Usuario o contraseña incorrectas.")
 	return render_template('usuarios/login.html', form=form)
 
 
@@ -45,37 +45,37 @@ def logout():
 def registro():
 	# Control de permisos
 	if current_user.is_authenticated:
-		return redirect(url_for("contactos"))
+		return redirect(url_for("personas"))
 
 	form=formUsuario()
 	if form.validate_on_submit():
-		existe_usuario=Usuarios.query.filter_by(username=form.username.data).first()
+		existe_usuario=Usuarios.query.filter_by(usuario=form.usuario.data).first()
 		if existe_usuario==None:
 			user=Usuarios()
 			form.populate_obj(user)
 			user.admin=False
 			db.session.add(user)
 			db.session.commit()
-			return redirect(url_for("contactos"))
-		form.username.errors.append("Nombre de usuario ya existe.")
+			return redirect(url_for("personas"))
+		form.usuario.errors.append("Nombre de usuario ya existe.")
 	return render_template("usuarios/registro.html",form=form)
 
 
 @app.route('/perfil/editar', methods=['POST'])
 @login_required
 def perfil_editar():
-	username = request.form.get('username', '').strip()
+	usuario = request.form.get('usuario', '').strip()
 	nombre   = request.form.get('nombre', '').strip()
 	email    = request.form.get('email', '').strip()
 	pwd      = request.form.get('password', '').strip()
-	if username:
-		current_user.username = username
+	if usuario:
+		current_user.usuario = usuario
 	current_user.nombre = nombre
 	current_user.email  = email
 	if pwd:
 		current_user.password = pwd
 	db.session.commit()
-	return redirect(request.referrer or url_for('contactos'))
+	return redirect(request.referrer or url_for('personas'))
 
 
 @app.route('/usuarios/', methods=['GET'])
@@ -83,11 +83,11 @@ def perfil_editar():
 def usuarios_list():
 	if not current_user.is_admin():
 		abort(403)
-	f_username = request.args.get('username', '').strip().lower()
+	f_usuario = request.args.get('usuario', '').strip().lower()
 	f_nombre   = request.args.get('nombre', '').strip().lower()
-	usuarios = Usuarios.query.order_by(Usuarios.username.asc()).all()
-	if f_username:
-		usuarios = [u for u in usuarios if f_username in u.username.lower()]
+	usuarios = Usuarios.query.order_by(Usuarios.usuario.asc()).all()
+	if f_usuario:
+		usuarios = [u for u in usuarios if f_usuario in u.usuario.lower()]
 	if f_nombre:
 		usuarios = [u for u in usuarios if f_nombre in (u.nombre or '').lower()]
 	return render_template('usuarios/usuarios_list.html', usuarios=usuarios)
@@ -98,15 +98,15 @@ def usuarios_list():
 def usuarios_new():
 	if not current_user.is_admin():
 		abort(403)
-	username = request.form.get('username','').strip()
+	usuario = request.form.get('usuario','').strip()
 	nombre   = request.form.get('nombre','').strip()
 	email    = request.form.get('email','').strip()
 	password = request.form.get('password','').strip()
-	if username and password:
-		existe = Usuarios.query.filter_by(username=username).first()
+	if usuario and password:
+		existe = Usuarios.query.filter_by(usuario=usuario).first()
 		if not existe:
 			user = Usuarios()
-			user.username = username
+			user.usuario  = usuario
 			user.nombre   = nombre
 			user.email    = email
 			user.password = password
@@ -122,9 +122,9 @@ def usuarios_edit(uid):
 	if not current_user.is_admin():
 		abort(403)
 	user = Usuarios.query.get_or_404(uid)
-	username = request.form.get('username','').strip()
-	if username:
-		user.username = username
+	usuario = request.form.get('usuario','').strip()
+	if usuario:
+		user.usuario = usuario
 	user.nombre = request.form.get('nombre', user.nombre or '')
 	user.email  = request.form.get('email',  user.email  or '')
 	pwd = request.form.get('password','').strip()

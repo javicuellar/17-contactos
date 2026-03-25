@@ -9,13 +9,13 @@ from wtforms.validators import DataRequired
 
 
 class LoginForm(FlaskForm):
-	username = StringField('Login', validators=[DataRequired()])
+	usuario = StringField('Usuario', validators=[DataRequired()])
 	password = PasswordField('Password', validators=[DataRequired()])
 	submit 	 = SubmitField('Entrar')
 
 
 class formUsuario(FlaskForm):
-	username = StringField('Login', validators=[DataRequired()])
+	usuario = StringField('Usuario', validators=[DataRequired()])
 	password = PasswordField('Password', validators=[DataRequired()])
 	nombre   = StringField('Nombre completo')
 	email    = EmailField('Email')

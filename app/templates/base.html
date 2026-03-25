@@ -850,7 +850,7 @@
       justify-content: center;
     }
 
-    /* Modal contacto: dos cols → una */
+    /* Modal persona: dos cols → una */
     #modal-cont .modal-cuerpo > div { flex-direction: column !important; }
 
     /* Modal usuario / perfil: grid → columna */
@@ -862,7 +862,7 @@
       grid-template-columns: 1fr !important;
     }
 
-    /* Formularios de alta (contactos_new.html antiguo) */
+    /* Formularios de alta (personas_new.html antiguo) */
     .form-card { max-width: 100% !important; }
     div[style*="display:flex"][style*="flex-wrap:wrap"] { flex-direction: column; }
 
@@ -907,9 +907,9 @@
     <span>★</span><span>★</span><span>★</span><span>★</span><span>★</span>
   </div>
   <nav class="topbar-nav">
-    <a href="{{ url_for('contactos') }}"
-       {% if request.endpoint in ['contactos','contactos_new','contactos_edit','contactos_delete','subir_archivo','importar'] %}class="active"{% endif %}>
-      Contactos
+    <a href="{{ url_for('personas') }}"
+       {% if request.endpoint in ['personas','personas_new','personas_edit','personas_delete','subir_archivo','importar'] %}class="active"{% endif %}>
+      Personas
     </a>
     <a href="{{ url_for('etiquetas') }}"
        {% if request.endpoint in ['etiquetas','etiqueta_edit','etiqueta_delete'] %}class="active"{% endif %}>
@@ -928,7 +928,7 @@
             onclick="document.getElementById('modal-perfil').style.display='flex'"
             title="Editar mi perfil"
             style="cursor:pointer;">
-        {{ current_user.username | upper }}
+        {{ current_user.usuario | upper }}
       </span>
       <a href="/logout" title="Cerrar sesión">
         <span class="glyphicon glyphicon-off"></span>
@@ -952,18 +952,18 @@
   <!-- SIDEBAR IZQUIERDO -->
   <aside class="sidebar">
 
-    <!-- MENÚ 1: CONTACTOS -->
+    <!-- MENÚ 1: PERSONAS -->
     <div class="sidebar-section">
       <div class="sidebar-header {% if request.endpoint not in ['etiquetas','etiqueta_edit','etiqueta_delete'] %}{% else %}collapsed{% endif %}"
            onclick="toggleSidebar(this)">
-        <span>Contactos</span>
+        <span>Personas</span>
         <span class="arrow">▼</span>
       </div>
       <ul class="sidebar-items" {% if request.endpoint in ['etiquetas','etiqueta_edit','etiqueta_delete'] %}style="display:none"{% endif %}>
         <li>
-          <a href="{{ url_for('contactos') }}"
-             {% if request.endpoint == 'contactos' %}class="active"{% endif %}>
-            Mantenimiento de Contactos
+          <a href="{{ url_for('personas') }}"
+             {% if request.endpoint == 'personas' %}class="active"{% endif %}>
+            Mantenimiento de Personas
           </a>
         </li>
         <li>

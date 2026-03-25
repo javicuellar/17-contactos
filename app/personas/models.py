@@ -6,12 +6,15 @@ from datetime import datetime
 from app.app import db
 
 
+
+
 class Personas(db.Model):
-    """Personas — reemplaza a Contactos"""
+    """Personas — Tabla de personas con auditoría"""
     __tablename__ = 'personas'
     id           = Column(Integer, primary_key=True)
     UsuarioId    = Column(Integer, ForeignKey('usuarios.id'), nullable=False)
-    nombre       = Column(String(150), nullable=False)
+    apodo        = Column(String(150), nullable=False)
+    nombre       = Column(String(200), nullable=False)
     notas        = Column(String(255))
     usuario_alta = Column(String(100), nullable=False)
     fecha_alta   = Column(DateTime, nullable=False, default=datetime.now)

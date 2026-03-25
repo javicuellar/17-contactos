@@ -1,17 +1,17 @@
 {% extends "base.html" %}
 
-{% block title %}Borrar Contacto{% endblock %}
+{% block title %}Borrar Persona{% endblock %}
 
 {% block contenido %}
 
 <div class="breadcrumb-bar">
-  <a href="{{ url_for('contactos') }}">🏠</a>
+  <a href="{{ url_for('personas') }}">🏠</a>
   <span class="sep"> &gt; </span>
-  <a href="{{ url_for('contactos') }}">Contactos</a>
+  <a href="{{ url_for('personas') }}">Personas</a>
   <span class="sep"> &gt; </span>
-  <a href="{{ url_for('contactos') }}">Mantenimiento de Contactos</a>
+  <a href="{{ url_for('personas') }}">Mantenimiento de Personas</a>
   <span class="sep"> &gt; </span>
-  <span class="current">Borrar contacto</span>
+  <span class="current">Borrar persona</span>
 </div>
 
 
@@ -20,7 +20,7 @@
 
   <div class="alert alert-warning" style="display:flex;align-items:center;gap:8px;">
     <span style="font-size:18px;">⚠️</span>
-    <span>¿Estás seguro de que deseas borrar el contacto: <strong>{{ cont.nombre }}</strong>?</span>
+    <span>¿Estás seguro de que deseas borrar la persona: <strong>{{ cont.apodo }}</strong>?</span>
   </div>
 
   <form class="form-horizontal" method="post"

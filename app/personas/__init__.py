@@ -2,6 +2,7 @@ from flask import Blueprint
 
 
 
-contactos_bp = Blueprint('contactos', __name__)
+
+personas_bp = Blueprint('personas', __name__)
 
 from . import routes

@@ -1,0 +1,442 @@
+{% extends "base.html" %}
+
+{% block title %}Mantenimiento de Tipos{% endblock %}
+
+{% block contenido %}
+
+<div class="breadcrumb-bar">
+  <a href="{{ url_for('personas') }}">🏠</a>
+  <span class="sep"> &gt; </span>
+  <a href="{{ url_for('tipos') }}">Catálogos</a>
+  <span class="sep"> &gt; </span>
+  <span class="current">Mantenimiento de Tipos</span>
+</div>
+
+
+<!-- ══════════════════════════════════════════
+     PANEL SUPERIOR: TIPOS
+══════════════════════════════════════════ -->
+
+<!-- Filtros Tipos -->
+<div class="filtros-panel">
+  <div class="filtros-titulo">Filtros — Tipos</div>
+  <form method="GET" action="{{ url_for('tipos') }}" id="form-filtros-tipos">
+    <div class="filtros-linea">
+      <div class="filtro-campo">
+        <label for="f_nombre">Nombre:</label>
+        <input type="text" id="f_nombre" name="nombre" class="filtro-input"
+               value="{{ request.args.get('nombre','') }}" autocomplete="off">
+      </div>
+      <div class="filtro-campo">
+        <label for="f_desc">Descripción:</label>
+        <input type="text" id="f_desc" name="descripcion" class="filtro-input"
+               value="{{ request.args.get('descripcion','') }}" autocomplete="off">
+      </div>
+      <div class="filtro-btns">
+        <button type="submit" class="btn-filtrar">
+          <span class="glyphicon glyphicon-filter"></span> Filtrar
+        </button>
+        <button type="button" class="btn-limpiar" onclick="limpiarFiltros('form-filtros-tipos')">
+          <span class="glyphicon glyphicon-ban-circle"></span> Borrar filtros
+        </button>
+      </div>
+    </div>
+  </form>
+</div>
+
+{% if current_user.is_authenticated and current_user.is_admin() %}
+<button class="btn-nuevo" onclick="abrirModalNuevoTipo()">
+  <span class="glyphicon glyphicon-plus"></span> Nuevo tipo
+</button>
+{% endif %}
+
+<!-- Tabla Tipos -->
+<div class="content-card">
+  <table class="tabla-datos">
+    <thead>
+      <tr>
+        <th style="width:30%">Nombre <span class="sort-icon">&#8645;</span></th>
+        <th>Descripción <span class="sort-icon">&#8645;</span></th>
+        <th class="col-acciones" style="width:120px;">Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for tipo in tipos %}
+      <tr {% if tipo_sel_id == tipo.id %}style="background:var(--acento);font-weight:500;"{% endif %}>
+        <td>
+          <a href="{{ url_for('tipos', tipo_sel=tipo.id,
+                               nombre=request.args.get('nombre',''),
+                               descripcion=request.args.get('descripcion','')) }}"
+             style="color:var(--azul-menu);text-decoration:none;font-weight:500;">
+            {{ tipo.nombre }}
+          </a>
+        </td>
+        <td style="color:var(--texto-gris);">{{ tipo.descripcion }}</td>
+        <td class="col-acciones">
+          {% if current_user.is_authenticated and current_user.is_admin() %}
+          <a href="#" class="icon-lupa" title="Editar"
+             onclick="abrirModalEditarTipo('{{ tipo.id }}','{{ tipo.nombre | e }}','{{ tipo.descripcion | e }}'); return false;">
+            <span class="glyphicon glyphicon-pencil"></span>
+          </a>
+          <a href="#" class="icon-lupa" title="Seleccionar valores"
+             onclick="window.location='{{ url_for('tipos', tipo_sel=tipo.id) }}'; return false;"
+             style="margin-left:3px;border-color:var(--azul-menu);color:var(--azul-menu);">
+            <span class="glyphicon glyphicon-list"></span>
+          </a>
+          <a href="#" class="icon-lupa" title="Borrar"
+             style="margin-left:3px;border-color:#c0392b;color:#c0392b;"
+             onclick="abrirModalBorrarTipo('{{ tipo.id }}','{{ tipo.nombre | e }}',{{ tipo.rel_tipos_valores.count() }}); return false;">
+            <span class="glyphicon glyphicon-trash"></span>
+          </a>
+          {% endif %}
+        </td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="3" class="tabla-vacia">No hay tipos registrados.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+    <tfoot>
+      <tr>
+        <th colspan="2" style="text-align:right;padding:8px 12px;font-size:12px;">Total de registros:</th>
+        <th style="text-align:center;padding:8px 12px;font-size:12px;">{{ tipos | length }}</th>
+      </tr>
+    </tfoot>
+  </table>
+</div>
+
+
+<!-- ══════════════════════════════════════════
+     PANEL INFERIOR: VALORES DEL TIPO SEL.
+══════════════════════════════════════════ -->
+{% if tipo_sel %}
+
+<div style="margin-top:28px;">
+
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+    <span style="font-size:13px;font-weight:600;color:var(--azul-menu);">
+      📋 Valores del tipo: <strong>{{ tipo_sel.nombre }}</strong>
+    </span>
+    <a href="{{ url_for('tipos', nombre=request.args.get('nombre',''), descripcion=request.args.get('descripcion','')) }}"
+       style="font-size:11.5px;color:var(--texto-gris);text-decoration:none;border:1px solid var(--gris-borde);
+              padding:2px 8px;border-radius:3px;" title="Cerrar panel de valores">
+      ✕ Cerrar
+    </a>
+  </div>
+
+  <!-- Filtros Valores -->
+  <div class="filtros-panel">
+    <div class="filtros-titulo">Filtros — Valores</div>
+    <form method="GET" action="{{ url_for('tipos') }}" id="form-filtros-val">
+      <input type="hidden" name="tipo_sel" value="{{ tipo_sel.id }}">
+      <input type="hidden" name="nombre" value="{{ request.args.get('nombre','') }}">
+      <input type="hidden" name="descripcion" value="{{ request.args.get('descripcion','') }}">
+      <div class="filtros-linea">
+        <div class="filtro-campo">
+          <label for="f_valor">Valor:</label>
+          <input type="text" id="f_valor" name="valor" class="filtro-input"
+                 value="{{ request.args.get('valor','') }}" autocomplete="off">
+        </div>
+        <div class="filtro-btns">
+          <button type="submit" class="btn-filtrar">
+            <span class="glyphicon glyphicon-filter"></span> Filtrar
+          </button>
+          <button type="button" class="btn-limpiar" onclick="limpiarFiltrosValores()">
+            <span class="glyphicon glyphicon-ban-circle"></span> Borrar filtros
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  {% if current_user.is_authenticated and current_user.is_admin() %}
+  <button class="btn-nuevo" onclick="abrirModalNuevoValor()">
+    <span class="glyphicon glyphicon-plus"></span> Nuevo valor
+  </button>
+  {% endif %}
+
+  <!-- Tabla Valores -->
+  <div class="content-card">
+    <table class="tabla-datos">
+      <thead>
+        <tr>
+          <th>Nombre del valor <span class="sort-icon">&#8645;</span></th>
+          <th class="col-acciones" style="width:80px;">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for val in valores %}
+        <tr>
+          <td>{{ val.nombre }}</td>
+          <td class="col-acciones">
+            {% if current_user.is_authenticated and current_user.is_admin() %}
+            <a href="#" class="icon-lupa" title="Editar"
+               onclick="abrirModalEditarValor('{{ val.id }}','{{ val.nombre | e }}'); return false;">
+              <span class="glyphicon glyphicon-pencil"></span>
+            </a>
+            <a href="#" class="icon-lupa" title="Borrar"
+               style="margin-left:3px;border-color:#c0392b;color:#c0392b;"
+               onclick="abrirModalBorrarValor('{{ val.id }}','{{ val.nombre | e }}'); return false;">
+              <span class="glyphicon glyphicon-trash"></span>
+            </a>
+            {% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="2" class="tabla-vacia">No hay valores para este tipo.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+      <tfoot>
+        <tr>
+          <th style="text-align:right;padding:8px 12px;font-size:12px;">Total de registros:</th>
+          <th style="text-align:center;padding:8px 12px;font-size:12px;">{{ valores | length }}</th>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+
+</div>
+{% endif %}
+
+
+<!-- ══════════════════════════════════════════
+     MODAL: NUEVA / EDITAR TIPO
+══════════════════════════════════════════ -->
+<div id="modal-tipo" class="modal-overlay" style="display:none;" onclick="cerrarModalSiFondo(event,'modal-tipo')">
+  <div class="modal-caja" style="width:440px;">
+
+    <div class="modal-cabecera">
+      <span id="modal-tipo-titulo">Nuevo tipo</span>
+      <button class="modal-cerrar" onclick="cerrarModal('modal-tipo')">&times;</button>
+    </div>
+
+    <form id="form-tipo" method="post" action="">
+      <div class="modal-cuerpo">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <div class="form-group" style="margin-bottom:14px;">
+          <label style="font-size:12.5px;font-weight:500;display:block;margin-bottom:4px;">Nombre del tipo:</label>
+          <input type="text" name="nombre" id="tipo-nombre" class="form-control"
+                 style="height:32px;font-size:12.5px;" required>
+          <div id="tipo-error-nombre" style="color:#c0392b;font-size:11.5px;margin-top:3px;display:none;">
+            Este campo es obligatorio.
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label style="font-size:12.5px;font-weight:500;display:block;margin-bottom:4px;">Descripción:</label>
+          <input type="text" name="descripcion" id="tipo-descripcion" class="form-control"
+                 style="height:32px;font-size:12.5px;">
+        </div>
+      </div>
+
+      <div class="modal-pie">
+        <button type="submit" class="btn-modal-ok">
+          <span class="glyphicon glyphicon-ok"></span> Enviar
+        </button>
+        <button type="button" class="btn-modal-cancel" onclick="cerrarModal('modal-tipo')">
+          <span class="glyphicon glyphicon-remove"></span> Cancelar
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════
+     MODAL: CONFIRMAR BORRADO TIPO
+══════════════════════════════════════════ -->
+<div id="modal-borrar-tipo" class="modal-overlay" style="display:none;" onclick="cerrarModalSiFondo(event,'modal-borrar-tipo')">
+  <div class="modal-caja" style="width:460px;">
+
+    <div class="modal-cabecera" style="background:#c0392b;">
+      <span>Confirmar eliminación de tipo</span>
+      <button class="modal-cerrar" onclick="cerrarModal('modal-borrar-tipo')">&times;</button>
+    </div>
+
+    <div class="modal-cuerpo">
+      <div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:14px;">
+        <span style="font-size:28px;line-height:1;">⚠️</span>
+        <p style="margin:0;font-size:13px;font-weight:500;color:var(--texto-oscuro);">
+          ¿Estás seguro de borrar el tipo:
+          <strong id="borrar-tipo-nombre" style="color:#c0392b;"></strong>?
+        </p>
+      </div>
+      <div style="background:#fcebeb;border-radius:4px;padding:10px 14px;font-size:12.5px;color:#791f1f;border-left:3px solid #c0392b;">
+        <strong>Atención:</strong> Se eliminarán también todos sus valores asociados.
+        Actualmente tiene <strong id="borrar-tipo-numval" style="font-size:14px;"></strong> valor(es).
+      </div>
+    </div>
+
+    <div class="modal-pie">
+      <form id="form-borrar-tipo" method="post" action="">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="btn-modal-danger">
+          <span class="glyphicon glyphicon-trash"></span> Sí, borrar
+        </button>
+        <button type="button" class="btn-modal-cancel" onclick="cerrarModal('modal-borrar-tipo')">
+          <span class="glyphicon glyphicon-remove"></span> No, cancelar
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════
+     MODAL: NUEVA / EDITAR VALOR
+══════════════════════════════════════════ -->
+<div id="modal-valor" class="modal-overlay" style="display:none;" onclick="cerrarModalSiFondo(event,'modal-valor')">
+  <div class="modal-caja" style="width:420px;">
+
+    <div class="modal-cabecera">
+      <span id="modal-valor-titulo">Nuevo valor</span>
+      <button class="modal-cerrar" onclick="cerrarModal('modal-valor')">&times;</button>
+    </div>
+
+    <form id="form-valor" method="post" action="">
+      <div class="modal-cuerpo">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <div class="form-group">
+          <label style="font-size:12.5px;font-weight:500;display:block;margin-bottom:4px;">Nombre del valor:</label>
+          <input type="text" name="nombre" id="valor-nombre" class="form-control"
+                 style="height:32px;font-size:12.5px;" required>
+          <div id="valor-error-nombre" style="color:#c0392b;font-size:11.5px;margin-top:3px;display:none;">
+            Este campo es obligatorio.
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-pie">
+        <button type="submit" class="btn-modal-ok">
+          <span class="glyphicon glyphicon-ok"></span> Enviar
+        </button>
+        <button type="button" class="btn-modal-cancel" onclick="cerrarModal('modal-valor')">
+          <span class="glyphicon glyphicon-remove"></span> Cancelar
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════
+     MODAL: CONFIRMAR BORRADO VALOR
+══════════════════════════════════════════ -->
+<div id="modal-borrar-valor" class="modal-overlay" style="display:none;" onclick="cerrarModalSiFondo(event,'modal-borrar-valor')">
+  <div class="modal-caja" style="width:440px;">
+
+    <div class="modal-cabecera" style="background:#c0392b;">
+      <span>Confirmar eliminación de valor</span>
+      <button class="modal-cerrar" onclick="cerrarModal('modal-borrar-valor')">&times;</button>
+    </div>
+
+    <div class="modal-cuerpo">
+      <div style="display:flex;align-items:flex-start;gap:12px;">
+        <span style="font-size:28px;line-height:1;">⚠️</span>
+        <p style="margin:0;font-size:13px;font-weight:500;color:var(--texto-oscuro);">
+          ¿Estás seguro de borrar el valor:
+          <strong id="borrar-valor-nombre" style="color:#c0392b;"></strong>?
+        </p>
+      </div>
+    </div>
+
+    <div class="modal-pie">
+      <form id="form-borrar-valor" method="post" action="">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="btn-modal-danger">
+          <span class="glyphicon glyphicon-trash"></span> Sí, borrar
+        </button>
+        <button type="button" class="btn-modal-cancel" onclick="cerrarModal('modal-borrar-valor')">
+          <span class="glyphicon glyphicon-remove"></span> No, cancelar
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+
+<script>
+/* ── URLs base ── */
+var urlTipoNuevo  = "{{ url_for('tipo_edit') }}";
+var urlTipoBase   = "{{ url_for('tipo_edit') }}".replace('/new', '');
+{% if tipo_sel %}
+var tipoSelId     = {{ tipo_sel.id }};
+var urlValorNuevo = "{{ url_for('tipo_valor_edit', tipo_id=tipo_sel.id) }}";
+var urlValorBase  = "{{ url_for('tipo_valor_edit', tipo_id=tipo_sel.id) }}".replace('/new', '');
+{% endif %}
+
+/* ── Modales TIPO ── */
+function abrirModalNuevoTipo() {
+  document.getElementById('modal-tipo-titulo').textContent = 'Nuevo tipo';
+  document.getElementById('tipo-nombre').value = '';
+  document.getElementById('tipo-descripcion').value = '';
+  document.getElementById('tipo-error-nombre').style.display = 'none';
+  document.getElementById('form-tipo').action = urlTipoNuevo;
+  document.getElementById('modal-tipo').style.display = 'flex';
+  setTimeout(function(){ document.getElementById('tipo-nombre').focus(); }, 80);
+}
+
+function abrirModalEditarTipo(id, nombre, descripcion) {
+  document.getElementById('modal-tipo-titulo').textContent = 'Editar tipo';
+  document.getElementById('tipo-nombre').value = nombre;
+  document.getElementById('tipo-descripcion').value = descripcion;
+  document.getElementById('tipo-error-nombre').style.display = 'none';
+  document.getElementById('form-tipo').action = urlTipoBase + '/' + id + '/edit';
+  document.getElementById('modal-tipo').style.display = 'flex';
+  setTimeout(function(){ document.getElementById('tipo-nombre').focus(); }, 80);
+}
+
+function abrirModalBorrarTipo(id, nombre, numVal) {
+  document.getElementById('borrar-tipo-nombre').textContent = nombre;
+  document.getElementById('borrar-tipo-numval').textContent = numVal;
+  document.getElementById('form-borrar-tipo').action = urlTipoBase + '/' + id + '/delete';
+  document.getElementById('modal-borrar-tipo').style.display = 'flex';
+}
+
+/* ── Modales VALOR ── */
+function abrirModalNuevoValor() {
+  document.getElementById('modal-valor-titulo').textContent = 'Nuevo valor';
+  document.getElementById('valor-nombre').value = '';
+  document.getElementById('valor-error-nombre').style.display = 'none';
+  document.getElementById('form-valor').action = urlValorNuevo;
+  document.getElementById('modal-valor').style.display = 'flex';
+  setTimeout(function(){ document.getElementById('valor-nombre').focus(); }, 80);
+}
+
+function abrirModalEditarValor(id, nombre) {
+  document.getElementById('modal-valor-titulo').textContent = 'Editar valor';
+  document.getElementById('valor-nombre').value = nombre;
+  document.getElementById('valor-error-nombre').style.display = 'none';
+  document.getElementById('form-valor').action = urlValorBase + '/' + id + '/edit';
+  document.getElementById('modal-valor').style.display = 'flex';
+  setTimeout(function(){ document.getElementById('valor-nombre').focus(); }, 80);
+}
+
+function abrirModalBorrarValor(id, nombre) {
+  document.getElementById('borrar-valor-nombre').textContent = nombre;
+  document.getElementById('form-borrar-valor').action = urlValorBase + '/' + id + '/delete';
+  document.getElementById('modal-borrar-valor').style.display = 'flex';
+}
+
+/* ── Limpiar filtros valores ── */
+function limpiarFiltrosValores() {
+  {% if tipo_sel %}
+  window.location = "{{ url_for('tipos', tipo_sel=tipo_sel.id) }}";
+  {% endif %}
+}
+
+/* ── Escape cierra todos ── */
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    ['modal-tipo','modal-borrar-tipo','modal-valor','modal-borrar-valor']
+      .forEach(function(id){ cerrarModal(id); });
+  }
+});
+</script>
+
+{% endblock %}

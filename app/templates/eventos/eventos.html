@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+
+{% block title %}Eventos de {{ persona.apodo }}{% endblock %}
+
+{% block contenido %}
+
+<div class="breadcrumb-bar">
+  <a href="{{ url_for('personas') }}">🏠</a>
+  <span class="sep"> &gt; </span>
+  <a href="{{ url_for('personas') }}">Personas</a>
+  <span class="sep"> &gt; </span>
+  <span class="current">Eventos de {{ persona.apodo }}</span>
+</div>
+
+
+<!-- ── FORMULARIO DE ALTA ─────────────────────────────────────────────── -->
+<div class="panel panel-default mb-4">
+  <div class="panel-heading"><strong>Nuevo evento</strong></div>
+  <div class="panel-body">
+    <form method="POST" action="{{ url_for('eventos_new', persona_id=persona.id) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="row">
+
+        <div class="col-sm-4">
+          <div class="form-group">
+            <label for="TiposValoresId">Tipo de evento</label>
+            <select name="TiposValoresId" id="TiposValoresId" class="form-control" required>
+              <option value="">-- Selecciona --</option>
+              {% for id_val, nombre_val in form_nuevo.TiposValoresId.choices %}
+                <option value="{{ id_val }}">{{ nombre_val }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <div class="col-sm-4">
+          <div class="form-group">
+            <label for="fecha">Fecha</label>
+            <input type="date" name="fecha" id="fecha" class="form-control" required>
+          </div>
+        </div>
+
+        <div class="col-sm-4 d-flex align-items-end">
+          <button type="submit" class="btn btn-primary">➕ Añadir</button>
+        </div>
+
+      </div>
+    </form>
+  </div>
+</div>
+
+
+<!-- ── TABLA DE EVENTOS ───────────────────────────────────────────────── -->
+{% if eventos %}
+<table class="table table-striped table-hover table-bordered">
+  <thead class="thead-dark">
+    <tr>
+      <th>#</th>
+      <th>Tipo</th>
+      <th>Fecha</th>
+      <th>Alta</th>
+      <th>Acciones</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for ev in eventos %}
+    <tr>
+      <td>{{ ev.id }}</td>
+      <td>{{ ev.tipo_nombre }}</td>
+      <td>{{ ev.fecha.strftime('%d/%m/%Y') }}</td>
+      <td>{{ ev.usuario_alta }} — {{ ev.fecha_alta.strftime('%d/%m/%Y') }}</td>
+      <td>
+
+        <!-- Botón editar (abre modal) -->
+        <button type="button" class="btn btn-sm btn-warning"
+                data-toggle="modal"
+                data-target="#modal-edit-{{ ev.id }}">✏️</button>
+
+        <!-- Botón eliminar (abre modal) -->
+        <button type="button" class="btn btn-sm btn-danger"
+                data-toggle="modal"
+                data-target="#modal-del-{{ ev.id }}">🗑️</button>
+
+      </td>
+    </tr>
+
+    <!-- ── Modal EDITAR ──────────────────────────────────────────────── -->
+    <div class="modal fade" id="modal-edit-{{ ev.id }}" tabindex="-1" role="dialog">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Editar evento #{{ ev.id }}</h5>
+            <button type="button" class="close" data-dismiss="modal">&times;</button>
+          </div>
+          <form method="POST"
+                action="{{ url_for('eventos_edit', persona_id=persona.id, id=ev.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="modal-body">
+
+              <div class="form-group">
+                <label>Tipo de evento</label>
+                <select name="TiposValoresId" class="form-control" required>
+                  {% for id_val, nombre_val in form_nuevo.TiposValoresId.choices %}
+                    <option value="{{ id_val }}"
+                      {% if id_val == ev.TiposValoresId %}selected{% endif %}>
+                      {{ nombre_val }}
+                    </option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label>Fecha</label>
+                <input type="date" name="fecha" class="form-control"
+                       value="{{ ev.fecha.strftime('%Y-%m-%d') }}" required>
+              </div>
+
+            </div>
+            <div class="modal-footer">
+              <button type="submit" class="btn btn-primary">Guardar</button>
+              <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Modal ELIMINAR ────────────────────────────────────────────── -->
+    <div class="modal fade" id="modal-del-{{ ev.id }}" tabindex="-1" role="dialog">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">¿Eliminar evento?</h5>
+            <button type="button" class="close" data-dismiss="modal">&times;</button>
+          </div>
+          <div class="modal-body">
+            <p>¿Seguro que quieres eliminar el evento
+               <strong>{{ ev.tipo_nombre }}</strong>
+               del <strong>{{ ev.fecha.strftime('%d/%m/%Y') }}</strong>?
+            </p>
+          </div>
+          <div class="modal-footer">
+            <form method="POST"
+                  action="{{ url_for('eventos_delete', persona_id=persona.id, id=ev.id) }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="btn btn-danger">Eliminar</button>
+              <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {% endfor %}
+  </tbody>
+</table>
+
+{% else %}
+  <div class="alert alert-info">Esta persona aún no tiene eventos registrados.</div>
+{% endif %}
+
+
+<!-- ── Botón volver ───────────────────────────────────────────────────── -->
+<a href="{{ url_for('personas') }}{% if filtro_qs %}?{{ filtro_qs }}{% endif %}"
+   class="btn btn-secondary mt-2">← Volver a Personas</a>
+
+{% endblock %}

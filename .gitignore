@@ -1,6 +1,5 @@
 #  No llevamos al repositorio las carpetas y ficheros siguientes
-*.docx
-*.xlsx
+**/doc
 
 # Ficheros log de sincronización PC a NAS
 **/*.log
